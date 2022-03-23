@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace Glanum\Locus\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class LocusCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'laravel-locus';
 
     public $description = 'My command';
 
