@@ -2,8 +2,11 @@
 
 namespace Glanum\Locus;
 
+use Illuminate\Routing\Route;
+use Illuminate\Routing\RouteCollection;
 use Illuminate\Routing\Router;
 use Illuminate\Routing\RouteRegistrar;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -28,6 +31,9 @@ class LocusServiceProvider extends PackageServiceProvider
     public function packageBooted()
     {
         Router::macro('localize', function ($callback) {
+
+            $routesBefore = $this->getRoutes()->getRoutes();
+
             if (true) {
                 $callback();
             }
@@ -38,13 +44,43 @@ class LocusServiceProvider extends PackageServiceProvider
                 $routeRegistar->group(function () use ($callback) {
                     $callback();
                 });
-
-
             }
 
-            foreach ($this->getRoutes()->getRoutes() as $route) {
-                $route->setUri(Str::of($route->uri())->replace('product', 'produit'));
+            $routes = $this->getRoutes()->getRoutes();
+
+            $routeCollection = new RouteCollection();
+
+            foreach ($routes as $key => $route) {
+
+                $found = Arr::first($routesBefore, function($routeBefore) use ($route) {
+                    return $routeBefore->uri() === $route->uri();
+                });
+
+                if ($found !== null) {
+                    $routeCollection->add($route);
+                    continue;
+                }
+
+                if (property_exists($route, 'localeIgnore') && $route->localeIgnore) {
+                    if (in_array(['en', 'fr'], explode('/', $route->uri()))) {
+                        unset($routes[$key]);
+                    }
+                    continue;
+                }
+
+                $route->setUri(Str::of($route->uri())->replace('product', 'produit')->toString());
+                $action =  $route->getAction();
+                $action['prefix'] = Str::of($route->getAction()['prefix'])->replace('product', 'produit')->toString();
+                $route->setAction($action);
+
+                $routeCollection->add($route);
             }
+
+            $this->setRoutes($routeCollection);
+        });
+
+        Route::macro('localeIgnore', function() {
+            $this->localeIgnore = true;
         });
     }
 }
