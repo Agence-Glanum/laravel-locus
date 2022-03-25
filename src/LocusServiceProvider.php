@@ -38,7 +38,9 @@ class LocusServiceProvider extends PackageServiceProvider
                 $callback();
             }
 
-            foreach (['en', 'fr'] as $locale) {
+            $locales = config('locus.locales');
+
+            foreach ($locales as $locale) {
                 $routeRegistar = (new RouteRegistrar($this))->attribute('prefix', $locale);
 
                 $routeRegistar->group(function () use ($callback) {
@@ -62,8 +64,10 @@ class LocusServiceProvider extends PackageServiceProvider
                 }
 
                 if (property_exists($route, 'localeIgnore') && $route->localeIgnore) {
-                    if (in_array(['en', 'fr'], explode('/', $route->uri()))) {
-                        unset($routes[$key]);
+                    foreach ($locales as $locale) {
+                        if (in_array($locale, explode('/', $route->uri()))) {
+                            unset($routes[$key]);
+                        }
                     }
                     continue;
                 }
@@ -72,7 +76,9 @@ class LocusServiceProvider extends PackageServiceProvider
                 $action =  $route->getAction();
                 $action['prefix'] = Str::of($route->getAction()['prefix'])->replace('product', 'produit')->toString();
                 $route->setAction($action);
+            }
 
+            foreach ($routes as $route) {
                 $routeCollection->add($route);
             }
 

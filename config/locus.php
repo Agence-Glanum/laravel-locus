@@ -1,5 +1,12 @@
 <?php
-// config for Agence-Glanum/Locus
+
 return [
+
+    'locales' => [
+        'fr',
+        'en',
+        'es',
+        'it'
+    ]
 
 ];
