@@ -7,6 +7,8 @@ return [
         'en',
         'es',
         'it'
-    ]
+    ],
+
+    'acceptUrlWithoutLocalePrefix' => true
 
 ];
