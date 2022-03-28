@@ -9,7 +9,9 @@ use Illuminate\Routing\Router;
 use Illuminate\Routing\RouteRegistrar;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Translation\Translator;
 
 class Locus
 {
@@ -25,6 +27,8 @@ class Locus
 
     public Collection $tempPrefixes;
 
+    public Translator $translator;
+
     public function __construct(Router $router)
     {
         $this->router = $router;
@@ -33,6 +37,7 @@ class Locus
         $this->newRoutes = collect();
         $this->tempPrefixes = collect();
         $this->config = config('locus');
+        $this->translator = app('translator');
     }
 
     public function localize(Closure $routesCallback)
@@ -116,11 +121,36 @@ class Locus
     protected function translateRoutes()
     {
         $this->newRoutes->each(function (Route $route) {
-            $route->setUri(Str::of($route->uri())->replace('product', 'produit')->toString());
-            $action =  $route->getAction();
-            $action['prefix'] = Str::of($route->getAction()['prefix'])->replace('product', 'produit')->toString();
-            $route->setAction($action);
+                $action = $route->getAction();
+
+                $locale = Str::of($action['as'])->explode('.')->first();
+
+                $route->setUri($this->translateSegments($route->uri(), $locale));
+
+                $action['prefix'] = $this->translateSegments($action['prefix'], $locale);
+                $route->setAction($action);
         });
+
+    }
+
+    protected function translateSegments(string $uri, string $locale): string
+    {
+        $this->translator->setLocale($locale);
+
+        return Str::of($uri)
+            ->explode('/')
+            ->map(function($segment) use ($locale) {
+                $translationKey = 'localize.'. $segment;
+
+                $translation = $this->translator->get($translationKey);
+
+                if ($translation === $translationKey) {
+                    return $segment;
+                }
+
+                return $translation;
+            })
+            ->implode('/');
     }
 
     protected function removeTempPrefixes()
