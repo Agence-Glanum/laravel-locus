@@ -59,6 +59,25 @@ class Locus
 
     protected function registerRoutes()
     {
+        $this->registerDefaultRoutes();
+
+        $this->registerLocalizedRoutes();
+    }
+
+    protected function registerDefaultRoutes()
+    {
+        ($this->routesCallback)();
+
+        $this->detectNewRoutes();
+
+        $this->newRoutes->each(function (Route $route, $key) {
+            $route->isDefault = true;
+        });
+
+    }
+
+    protected function registerLocalizedRoutes()
+    {
         foreach ($this->getConfig('locales', []) as $locale) {
 
             if ($this->getConfig('acceptUrlWithoutLocalePrefix', [])) {
@@ -76,7 +95,7 @@ class Locus
 
             $routeRegistrar = (new RouteRegistrar($this->router))->attribute('prefix', $locale);
 
-            $routeRegistrar->name($locale.'.')->group(function (){
+            $routeRegistrar->name($locale.'.prefix.')->group(function (){
                 ($this->routesCallback)();
             });
         }
@@ -100,7 +119,7 @@ class Locus
             $newRoutes->add($route);
         });
 
-        $this->newRoutes = $newRoutes;
+        $this->newRoutes = $this->newRoutes->merge($newRoutes);
     }
 
     protected function removeIgnoredRoutes()
@@ -110,25 +129,29 @@ class Locus
                 return;
             }
 
-            foreach ($this->getConfig('locales', []) as $locale) {
-                if (in_array($locale, explode('/', $route->uri()))) {
-                    unset($this->newRoutes[$key]);
-                }
+            if (property_exists($route, 'isDefault') && $route->isDefault) {
+                return;
             }
+
+            unset($this->newRoutes[$key]);
         });
     }
 
     protected function translateRoutes()
     {
         $this->newRoutes->each(function (Route $route) {
-                $action = $route->getAction();
+            if (property_exists($route, 'isDefault') && $route->isDefault) {
+                return;
+            }
 
-                $locale = Str::of($action['as'])->explode('.')->first();
+            $action = $route->getAction();
 
-                $route->setUri($this->translateSegments($route->uri(), $locale));
+            $locale = Str::of($action['as'])->explode('.')->first();
 
-                $action['prefix'] = $this->translateSegments($action['prefix'], $locale);
-                $route->setAction($action);
+            $route->setUri($this->translateSegments($route->uri(), $locale));
+
+            $action['prefix'] = $this->translateSegments($action['prefix'], $locale);
+            $route->setAction($action);
         });
 
     }
