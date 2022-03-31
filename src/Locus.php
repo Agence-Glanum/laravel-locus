@@ -3,6 +3,7 @@
 namespace Glanum\Locus;
 
 use Closure;
+use Glanum\Locus\enums\config\Method;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Routing\Router;
@@ -21,7 +22,7 @@ class Locus
 
     public Collection $newRoutes;
 
-    public array $config;
+    public Config $config;
 
     public Closure $routesCallback;
 
@@ -36,22 +37,29 @@ class Locus
         $this->oldRoutes = $this->getUpdatedRoutes();
         $this->newRoutes = collect();
         $this->tempPrefixes = collect();
-        $this->config = config('locus');
+        $this->config = new Config();
         $this->translator = app('translator');
     }
 
-    public function localize(Closure $routesCallback)
+
+    /**
+     * @param  array|Closure  $config
+     * @param  Closure|null  $routesCallback
+     */
+    public function localize($config, Closure $routesCallback = null)
     {
+        if (is_array($config)) {
+            $this->config->setConfig($config);
+        } else {
+            $routesCallback = $config;
+        }
+
         $this->routesCallback = $routesCallback;
 
         $this->registerRoutes();
-
         $this->detectNewRoutes();
-
         $this->removeIgnoredRoutes();
-
         $this->translateRoutes();
-
         $this->cleanup();
 
         $this->overrideRoutes($this->oldRoutes->merge($this->newRoutes));
@@ -59,7 +67,9 @@ class Locus
 
     protected function registerRoutes()
     {
-        $this->registerDefaultRoutes();
+        if ($this->config->getMethod() === Method::DOMAIN || $this->config->getMethod() === Method::HIDDEN) {
+            $this->registerDefaultRoutes();
+        }
 
         $this->registerLocalizedRoutes();
     }
@@ -77,9 +87,8 @@ class Locus
 
     protected function registerLocalizedRoutes()
     {
-        foreach ($this->getConfig('locales', []) as $locale) {
-
-            if ($this->getConfig('acceptUrlWithoutLocalePrefix', [])) {
+        foreach ($this->config->getLocales() as $locale) {
+            if ($this->config->getMethod() === Method::DOMAIN || $this->config->getMethod() === Method::HIDDEN) {
 
                 $prefix = Str::random(40);
 
@@ -92,11 +101,13 @@ class Locus
                 $this->tempPrefixes->add($prefix);
             }
 
-            $routeRegistrar = (new RouteRegistrar($this->router))->attribute('prefix', $locale);
+            if ($this->config->getMethod() === Method::PREFIX) {
+                $routeRegistrar = (new RouteRegistrar($this->router))->attribute('prefix', $locale);
 
-            $routeRegistrar->name($locale.'.prefix.')->group(function (){
-                ($this->routesCallback)();
-            });
+                $routeRegistrar->name($locale.'.prefix.')->group(function () {
+                    ($this->routesCallback)();
+                });
+            }
         }
     }
 
@@ -197,11 +208,6 @@ class Locus
     protected function removeDuplicatedRoutes()
     {
         $this->newRoutes = $this->newRoutes->unique('uri');
-    }
-
-    protected function getConfig($key, $default = null)
-    {
-        return Arr::get($this->config, $key, $default);
     }
 
     protected function getUpdatedRoutes(): Collection

@@ -23,16 +23,16 @@ class LocusServiceProvider extends PackageServiceProvider
          */
         $package
             ->name('laravel-locus')
-            ->hasConfigFile()
+            ->hasConfigFile('locus')
             ->hasViews()
             ->hasCommand(LocusCommand::class);
     }
 
     public function packageBooted()
     {
-        Router::macro('localize', function ($callback) {
+        Router::macro('localize', function ($config, $callback = null) {
 
-            (new Locus($this))->localize($callback);
+            (new Locus($this))->localize($config, $callback);
 
 //            $routesBefore = $this->getRoutes()->getRoutes();
 //
