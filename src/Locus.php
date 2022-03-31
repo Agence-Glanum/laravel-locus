@@ -52,7 +52,7 @@ class Locus
 
         $this->translateRoutes();
 
-        $this->removeTempPrefixes();
+        $this->cleanup();
 
         $this->overrideRoutes($this->oldRoutes->merge($this->newRoutes));
     }
@@ -73,7 +73,6 @@ class Locus
         $this->newRoutes->each(function (Route $route, $key) {
             $route->isDefault = true;
         });
-
     }
 
     protected function registerLocalizedRoutes()
@@ -176,6 +175,13 @@ class Locus
             ->implode('/');
     }
 
+    protected function cleanup()
+    {
+        $this->removeTempPrefixes();
+
+        $this->removeDuplicatedRoutes();
+    }
+
     protected function removeTempPrefixes()
     {
         $this->tempPrefixes->each(function (string $prefix) {
@@ -186,6 +192,11 @@ class Locus
                 $route->setAction($action);
             });
         });
+    }
+
+    protected function removeDuplicatedRoutes()
+    {
+        $this->newRoutes = $this->newRoutes->unique('uri');
     }
 
     protected function getConfig($key, $default = null)
