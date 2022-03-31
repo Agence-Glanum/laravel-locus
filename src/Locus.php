@@ -149,6 +149,10 @@ class Locus
 
     protected function translateRoutes()
     {
+        if ($this->config->getUriTranslation() === false) {
+            return;
+        }
+
         $this->newRoutes->each(function (Route $route) {
             if (property_exists($route, 'isDefault') && $route->isDefault) {
                 return;

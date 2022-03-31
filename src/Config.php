@@ -26,6 +26,11 @@ class Config
         return Arr::get($this->config, 'method', Method::PREFIX);
     }
 
+    public function getUriTranslation(): bool
+    {
+        return Arr::get($this->config, 'allow_uri_translation', []);
+    }
+
     public function setConfig($config = [])
     {
         $this->config = array_merge($this->config, $config);
