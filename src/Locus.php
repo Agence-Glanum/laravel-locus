@@ -80,7 +80,7 @@ class Locus
 
         $this->detectNewRoutes();
 
-        $this->newRoutes->each(function (Route $route, $key) {
+        $this->newRoutes->each(function (Route $route) {
             $route->isDefault = true;
         });
     }
@@ -176,7 +176,7 @@ class Locus
 
         return Str::of($uri)
             ->explode('/')
-            ->map(function($segment) use ($locale) {
+            ->map(function($segment) {
                 $translationKey = 'localize.'. $segment;
 
                 $translation = $this->translator->get($translationKey);

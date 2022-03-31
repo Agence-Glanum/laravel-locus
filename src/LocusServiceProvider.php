@@ -31,60 +31,7 @@ class LocusServiceProvider extends PackageServiceProvider
     public function packageBooted()
     {
         Router::macro('localize', function ($config, $callback = null) {
-
             (new Locus($this))->localize($config, $callback);
-
-//            $routesBefore = $this->getRoutes()->getRoutes();
-//
-//            if (true) {
-//                $callback();
-//            }
-//
-//            $locales = config('locus.locales');
-//
-//            foreach ($locales as $locale) {
-//                $routeRegistar = (new RouteRegistrar($this))->attribute('prefix', $locale);
-//
-//                $routeRegistar->group(function () use ($callback) {
-//                    $callback();
-//                });
-//            }
-//
-//            $routes = $this->getRoutes()->getRoutes();
-//
-//            $routeCollection = new RouteCollection();
-//
-//            foreach ($routes as $key => $route) {
-//
-//                $found = Arr::first($routesBefore, function($routeBefore) use ($route) {
-//                    return $routeBefore->uri() === $route->uri();
-//                });
-//
-//                if ($found !== null) {
-//                    $routeCollection->add($route);
-//                    continue;
-//                }
-//
-//                if (property_exists($route, 'localeIgnore') && $route->localeIgnore) {
-//                    foreach ($locales as $locale) {
-//                        if (in_array($locale, explode('/', $route->uri()))) {
-//                            unset($routes[$key]);
-//                        }
-//                    }
-//                    continue;
-//                }
-//
-//                $route->setUri(Str::of($route->uri())->replace('product', 'produit')->toString());
-//                $action =  $route->getAction();
-//                $action['prefix'] = Str::of($route->getAction()['prefix'])->replace('product', 'produit')->toString();
-//                $route->setAction($action);
-//            }
-//
-//            foreach ($routes as $route) {
-//                $routeCollection->add($route);
-//            }
-//
-//            $this->setRoutes($routeCollection);
         });
 
         Route::macro('localeIgnore', function() {
