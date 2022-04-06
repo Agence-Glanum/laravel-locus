@@ -31,11 +31,19 @@ class LocusServiceProvider extends PackageServiceProvider
     public function packageBooted()
     {
         Router::macro('localize', function ($config, $callback = null) {
-            (new Locus($this))->localize($config, $callback);
+            app(Locus::class)->localize($config, $callback);
         });
 
         Route::macro('localeIgnore', function() {
             $this->localeIgnore = true;
+        });
+    }
+
+
+    public function packageRegistered()
+    {
+        $this->app->singleton(Locus::class, function ($app) {
+            return new Locus($app['router']);
         });
     }
 }

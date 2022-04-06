@@ -3,6 +3,7 @@
 namespace Glanum\Locus;
 
 use Closure;
+use Exception;
 use Glanum\Locus\enums\config\Method;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\RouteCollection;
@@ -16,6 +17,8 @@ use Illuminate\Translation\Translator;
 
 class Locus
 {
+    public bool $isLocalized = false;
+
     public Router $router;
 
     public Collection $oldRoutes;
@@ -45,9 +48,16 @@ class Locus
     /**
      * @param  array|Closure  $config
      * @param  Closure|null  $routesCallback
+     * @throws Exception
      */
     public function localize($config, Closure $routesCallback = null)
     {
+        if ($this->isLocalized) {
+            throw new Exception('Routes can only be localized once');
+        }
+
+        $this->isLocalized = true;
+
         if (is_array($config)) {
             $this->config->setConfig($config);
         } else {
