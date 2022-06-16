@@ -2,6 +2,7 @@
 
 namespace Glanum\Locus;
 
+use Glanum\Locus\Http\Middleware\DetectLocale;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Routing\Router;
@@ -30,8 +31,13 @@ class LocusServiceProvider extends PackageServiceProvider
 
     public function packageBooted()
     {
-        Router::macro('localize', function ($config, $callback = null) {
-            app(Locus::class)->localize($config, $callback);
+        $app = $this->app;
+
+        $router = $app->make(Router::class);
+        $router->aliasMiddleware('detect.locale', DetectLocale::class);
+
+        Router::macro('localize', function ($config, $callback = null) use ($app) {
+            $app->make(Locus::class)->localize($config, $callback);
         });
 
         Route::macro('localeIgnore', function() {

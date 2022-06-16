@@ -31,6 +31,11 @@ class Config
         return Arr::get($this->config, 'allow_uri_translation', []);
     }
 
+    public function getSessionKey(): string
+    {
+        return Arr::get($this->config, 'session_key', '');
+    }
+
     public function setConfig($config = [])
     {
         $this->config = array_merge($this->config, $config);

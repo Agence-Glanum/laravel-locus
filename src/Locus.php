@@ -86,7 +86,13 @@ class Locus
 
     protected function registerDefaultRoutes()
     {
-        ($this->routesCallback)();
+        $routeRegistrar = (new RouteRegistrar($this->router));
+
+        $routeRegistrar->middleware('detect.locale')
+            ->group(function () {
+                ($this->routesCallback)();
+            }
+        );
 
         $this->detectNewRoutes();
 
@@ -102,21 +108,29 @@ class Locus
 
                 $prefix = Str::random(40);
 
-                $routeRegistrar = (new RouteRegistrar($this->router))->attribute('prefix', $prefix);
+                $routeRegistrar = (new RouteRegistrar($this->router));
 
-                $routeRegistrar->name($locale.'.')->group(function (){
-                    ($this->routesCallback)();
-                });
+                $routeRegistrar->prefix($prefix)
+                    ->middleware('detect.locale')
+                    ->name($locale.'.')
+                    ->group(function () {
+                        ($this->routesCallback)();
+                    }
+                );
 
                 $this->tempPrefixes->add($prefix);
             }
 
             if ($this->config->getMethod() === Method::PREFIX) {
-                $routeRegistrar = (new RouteRegistrar($this->router))->attribute('prefix', $locale);
+                $routeRegistrar = (new RouteRegistrar($this->router));
 
-                $routeRegistrar->name($locale.'.prefix.')->group(function () {
-                    ($this->routesCallback)();
-                });
+                $routeRegistrar->prefix($locale)
+                    ->middleware('detect.locale')
+                    ->name($locale.'.prefix.')
+                    ->group(function () {
+                        ($this->routesCallback)();
+                    }
+                );
             }
         }
     }
